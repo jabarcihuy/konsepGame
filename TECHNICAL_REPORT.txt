@@ -1,0 +1,77 @@
+============================================================
+TECHNICAL DOCUMENTATION: ALGORYTHM (SYNTAX BLADE)
+============================================================
+Author: Gemini CLI Expert Game Engineer
+Topic: OOP Concepts and Java Syntax Implementation
+
+I. KONSEP OBJECT-ORIENTED PROGRAMMING (OOP)
+-------------------------------------------
+
+1. ABSTRACTION (ABSTRAKSI)
+   - Implementasi: 'abstract class LogicPuzzle'.
+   - Detail: Kelas ini menyembunyikan detail implementasi teka-teki dan hanya menyediakan kerangka umum (questionString, expectedAnswer) yang harus diikuti oleh semua jenis teka-teki.
+
+2. INHERITANCE (PEWARISAN)
+   - Implementasi: 
+     * 'BooleanPuzzle', 'LoopPuzzle', 'ArrayPuzzle' mewarisi (extends) 'LogicPuzzle'.
+     * 'GamePanel', 'MainMenuPanel', 'GameOverPanel' mewarisi 'JPanel'.
+     * 'GameFrame' mewarisi 'JFrame'.
+     * 'TerminalButton' mewarisi 'JButton'.
+   - Detail: Memungkinkan penggunaan fungsionalitas komponen standar Java Swing sambil menambahkan fitur khusus game.
+
+3. POLYMORPHISM (POLIMORFISME)
+   - Implementasi:
+     * Overriding: Metode 'paintComponent(Graphics g)' di-override di setiap panel untuk rendering kustom.
+     * Dynamic Binding: 'PuzzleFactory' mengembalikan objek bertipe 'LogicPuzzle', namun perilakunya berubah tergantung apakah itu 'BooleanPuzzle' atau lainnya saat dijalankan.
+
+4. ENCAPSULATION (ENKAPSULASI)
+   - Implementasi: Penggunaan modifier 'private' pada variabel state seperti 'score', 'lives', 'running', dan 'thread'.
+   - Detail: Data sensitif dilindungi dan hanya bisa diakses melalui metode publik atau dikelola secara internal untuk menjaga integritas state game.
+
+5. INTERFACES
+   - Implementasi: 'implements Runnable' pada 'GamePanel'.
+   - Detail: Digunakan untuk mendefinisikan kontrak bahwa 'GamePanel' memiliki kemampuan untuk dijalankan sebagai Thread terpisah (Game Loop).
+
+
+II. SYNTAX DAN FITUR JAVA YANG DIGUNAKAN
+-----------------------------------------
+
+1. CONTROL FLOW & LOOPS
+   - 'switch-case': Digunakan di 'PuzzleFactory' dan state management.
+   - 'for-loop': Digunakan untuk rendering scanlines, grid, dan digital rain.
+   - 'while-loop': Digunakan sebagai jantung utama Game Loop ('while(running)').
+   - 'if-else': Validasi input dan logika tier progression.
+
+2. COLLECTIONS & DATA STRUCTURES
+   - 'java.util.List' & 'ArrayList': Digunakan untuk menampung 'TextToken' guna keperluan syntax highlighting.
+   - Arrays ('int[]'): Digunakan di efek digital rain untuk melacak posisi tetesan.
+
+3. CONCURRENCY (MULTITHREADING)
+   - 'Thread': Untuk memisahkan proses rendering/logika dari Event Dispatch Thread (EDT).
+   - 'SwingUtilities.invokeLater': Memastikan update UI dilakukan secara aman pada thread Swing.
+   - 'Thread.sleep()': Mengatur frame rate (FPS).
+
+4. GRAPHICS 2D API
+   - 'Graphics2D' casting: Untuk akses fitur rendering tingkat lanjut.
+   - 'RenderingHints': Mengatur Anti-aliasing agar teks dan grafis terlihat halus.
+   - 'AffineTransform' (translate): Digunakan untuk efek Screen Shake.
+   - 'FontMetrics': Menghitung lebar teks secara presisi agar teks berada di tengah (centering).
+
+5. LAMBDA EXPRESSIONS
+   - Implementasi: 'e -> repaint()' atau '() -> showGame()'.
+   - Detail: Digunakan pada Timer dan ActionListener untuk kode yang lebih ringkas dan modern.
+
+6. ENUMS
+   - 'private enum State { PLAYING, FEEDBACK }': Mengelola state internal di dalam 'GamePanel'.
+
+
+III. DESIGN PATTERNS
+---------------------
+
+1. FACTORY PATTERN: 'PuzzleFactory' untuk pembuatan objek teka-teki secara dinamis.
+2. STATE PATTERN: Digunakan untuk transisi fase permainan.
+3. MVC (MODEL-VIEW-CONTROLLER): Pemisahan antara 'engine' (Logika) dan 'swing' (Visual).
+4. SINGLETON-LIKE: 'MainSwing' sebagai entry point tunggal aplikasi.
+
+------------------------------------------------------------
+Laporan ini dibuat sebagai referensi teknis pengembangan game AlgoRythm.

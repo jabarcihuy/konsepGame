@@ -40,14 +40,30 @@ public class StateMachine implements Component {
     public void changeState(EntityState newState) {
         if (this.currentState == newState) return;
         
-        // Example logic: Can't break out of stagger or death easily
+        // Prevent illegal transitions (e.g., can't move if dead)
         if (this.currentState == EntityState.DEAD) return;
-        if (this.currentState == EntityState.STAGGERED && newState != EntityState.IDLE && newState != EntityState.DEAD) return;
+        
+        // Logical lockout: Can't interrupt Stagger unless dying
+        if (this.currentState == EntityState.STAGGERED && 
+            newState != EntityState.IDLE && 
+            newState != EntityState.DEAD) {
+            return;
+        }
 
+        // --- State EXIT Logic ---
+        switch (this.currentState) {
+            case PARRYING:
+                // Cleanup parry visuals if any
+                break;
+            default:
+                break;
+        }
+
+        EntityState oldState = this.currentState;
         this.currentState = newState;
         this.stateTimer = 0f;
 
-        // State entry logic
+        // --- State ENTRY Logic ---
         switch (newState) {
             case PARRYING:
                 parryWindowDuration = 0.2f; // 200ms active parry window
@@ -55,9 +71,15 @@ public class StateMachine implements Component {
             case DEAD:
                 setInvulnerable(true, 9999f);
                 break;
+            case STAGGERED:
+                // Ensure any active attacks are cancelled
+                setInvulnerable(false, 0f);
+                break;
             default:
                 break;
         }
+        
+        System.out.println("[StateMachine] " + owner + " transitioned from " + oldState + " to " + newState);
     }
 
     /**

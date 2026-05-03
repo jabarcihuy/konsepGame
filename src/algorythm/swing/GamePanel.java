@@ -36,6 +36,9 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean lastAnswerCorrect = false;
     private Random random = new Random();
     
+    // Grid animation
+    private float gridOffset = 0f;
+    
     // Performance Cache for Syntax Highlighting
     private class TextToken {
         String text;
@@ -44,9 +47,45 @@ public class GamePanel extends JPanel implements Runnable {
     }
     private java.util.List<java.util.List<TextToken>> cachedQuestionLines = new java.util.ArrayList<>();
 
+    // Typewriter effect
+    private float typewriterTimer = 0f;
+    private int visibleChars = 0;
+    private int totalChars = 0;
+    private boolean typewriterFinished = false;
+
+    // Glitch effect
+    private float glitchTimer = 0f;
+    private float glitchDuration = 0f;
+    private int glitchIntensity = 0;
+
+    // Tier Up Notification
+    private float tierUpTimer = 0f;
+
+    // Pre-allocated Colors and Fonts for Performance
+    private final Color COLOR_BG = new Color(10, 12, 16);
+    private final Color COLOR_GRID = new Color(0, 255, 200, 15);
+    private final Color COLOR_SCANLINE = new Color(0, 0, 0, 80);
+    private final Color COLOR_UI_BOX = new Color(25, 30, 40, 220);
+    private final Color COLOR_NEON_CYAN = new Color(0, 255, 200);
+    private final Color COLOR_NEON_RED = new Color(255, 50, 100);
+    private final Color COLOR_NEON_GREEN = new Color(0, 255, 100);
+    private final Color COLOR_PURPLE = new Color(200, 100, 255);
+    private final Color COLOR_GLITCH_RED = new Color(255, 0, 0, 50);
+    
+    private final Font FONT_HEADER = new Font("Consolas", Font.BOLD, 24);
+    private final Font FONT_STATS = new Font("Consolas", Font.BOLD, 18);
+    private final Font FONT_TIMER = new Font("Consolas", Font.PLAIN, 16);
+    private final Font FONT_TIMER_BOLD = new Font("Consolas", Font.BOLD, 16);
+    private final Font FONT_QUESTION = new Font("Consolas", Font.PLAIN, 22);
+    private final Font FONT_INPUT = new Font("Consolas", Font.BOLD, 28);
+    private final Font FONT_FEEDBACK = new Font("Consolas", Font.BOLD, 54);
+    private final Font FONT_TIER_UP = new Font("Consolas", Font.BOLD, 72);
+
+    private final BasicStroke STROKE_BORDER = new BasicStroke(2);
+
     public GamePanel() {
         setPreferredSize(new Dimension(800, 600));
-        setBackground(new Color(15, 15, 20));
+        setBackground(COLOR_BG);
         setFocusable(true);
 
         addKeyListener(new KeyAdapter() {
@@ -69,27 +108,42 @@ public class GamePanel extends JPanel implements Runnable {
         score = 0;
         lives = 3;
         currentTier = 1;
+        tierUpTimer = 0f;
         logicPhaseState = new LogicPhaseState();
         startNewPuzzle();
         start();
     }
 
     private void startNewPuzzle() {
-        if (score > 600) {
-            currentTier = random.nextInt(3) + 1; // 1-3
-        } else if (score > 300) {
-            currentTier = random.nextInt(2) + 1; // 1-2
+        int oldTier = currentTier;
+        if (score >= 1000) {
+            currentTier = 3;
+        } else if (score >= 500) {
+            currentTier = 2;
         } else {
-            currentTier = 1; // 1
+            currentTier = 1;
+        }
+        
+        if (currentTier > oldTier) {
+            tierUpTimer = 2.0f;
         }
         
         logicPhaseState.enter(currentTier);
         currentState = State.PLAYING;
         cacheQuestionTokens();
+        
+        // Reset typewriter
+        typewriterTimer = 0f;
+        visibleChars = 0;
+        typewriterFinished = false;
+        
+        // Reset glitch
+        glitchDuration = 0f;
     }
 
     private void cacheQuestionTokens() {
         cachedQuestionLines.clear();
+        totalChars = 0;
         String question = logicPhaseState.getPuzzleQuestion();
         if (question == null) return;
         
@@ -120,8 +174,10 @@ public class GamePanel extends JPanel implements Runnable {
                     c = new Color(200, 200, 200); // Light Gray
                 }
                 lineTokens.add(new TextToken(token, c));
+                totalChars += token.length();
             }
             cachedQuestionLines.add(lineTokens);
+            totalChars++; // newline char
         }
     }
 
@@ -144,12 +200,12 @@ public class GamePanel extends JPanel implements Runnable {
 
             elapsed = System.nanoTime() - start;
             wait = targetTime - elapsed / 1000000;
-            if (wait < 0) wait = 5;
+            if (wait < 5) wait = 5;
 
             try {
                 Thread.sleep(wait);
             } catch (Exception e) {
-                e.printStackTrace();
+                // Ignore
             }
         }
     }
@@ -160,8 +216,30 @@ public class GamePanel extends JPanel implements Runnable {
             showCursor = !showCursor;
             cursorBlinkTimer = 0f;
         }
+        
+        // Update grid animation
+        gridOffset += 15f * delta;
+        if (gridOffset > 40f) {
+            gridOffset -= 40f;
+        }
 
         if (currentState == State.PLAYING) {
+            // Typewriter update
+            if (!typewriterFinished) {
+                typewriterTimer += delta * 45; // Faster typewriter
+                visibleChars = (int) typewriterTimer;
+                if (visibleChars >= totalChars) {
+                    visibleChars = totalChars;
+                    typewriterFinished = true;
+                }
+            }
+            
+            // Random glitch if lives are low
+            if (lives == 1 && random.nextFloat() < 0.01f) {
+                glitchDuration = 0.2f;
+                glitchIntensity = 5;
+            }
+            
             logicPhaseState.update(delta);
             
             if (logicPhaseState.isFinished()) {
@@ -170,6 +248,8 @@ public class GamePanel extends JPanel implements Runnable {
                     score += 100 * currentTier; 
                 } else {
                     lives--; 
+                    glitchDuration = 0.5f;
+                    glitchIntensity = 15;
                 }
                 
                 if (lives <= 0) {
@@ -188,6 +268,14 @@ public class GamePanel extends JPanel implements Runnable {
                 startNewPuzzle();
             }
         }
+        
+        if (glitchDuration > 0) {
+            glitchDuration -= delta;
+        }
+        
+        if (tierUpTimer > 0) {
+            tierUpTimer -= delta;
+        }
     }
 
     private void handleInput(KeyEvent e, boolean isPressed) {
@@ -200,89 +288,164 @@ public class GamePanel extends JPanel implements Runnable {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Drawing Grid (Optimized: No new Color objects)
+        g2d.setColor(COLOR_GRID);
+        int width = getWidth();
+        int height = getHeight();
+        for (int i = 0; i < width; i += 40) {
+            g2d.drawLine(i, 0, i, height);
+        }
+        int offset = (int)gridOffset;
+        for (int i = -40; i < height; i += 40) {
+            int y = i + offset;
+            g2d.drawLine(0, y, width, y);
+        }
 
+        // Screen shake effect
+        int shakeX = 0;
+        int shakeY = 0;
+        if (currentState == State.PLAYING) {
+            float timeLeft = logicPhaseState.getTimeRemaining();
+            if (timeLeft < 5.0f && timeLeft > 0) {
+                int intensity = (int)(5.0f - timeLeft);
+                shakeX = (random.nextInt(intensity * 2 + 1) - intensity);
+                shakeY = (random.nextInt(intensity * 2 + 1) - intensity);
+            }
+        }
+        
+        if (glitchDuration > 0) {
+            shakeX += random.nextInt(glitchIntensity * 2 + 1) - glitchIntensity;
+            shakeY += random.nextInt(glitchIntensity * 2 + 1) - glitchIntensity;
+            
+            if (random.nextFloat() < 0.1f) {
+                g2d.setColor(COLOR_GLITCH_RED);
+                g2d.fillRect(random.nextInt(width), random.nextInt(height), random.nextInt(200), random.nextInt(20));
+            }
+        }
+        
+        g2d.translate(shakeX, shakeY);
         drawLogicPhase(g2d);
         
-        // Scanlines
-        g2d.setColor(new Color(0, 0, 0, 80));
-        for (int i = 0; i < getHeight(); i += 4) {
-            g2d.drawLine(0, i, getWidth(), i);
+        if (tierUpTimer > 0) {
+            float alpha = Math.min(1.0f, tierUpTimer);
+            g2d.setColor(new Color(255, 255, 0, (int)(alpha * 200))); // Dynamic alpha still needs new Color or composite
+            g2d.setFont(FONT_TIER_UP);
+            String msg = "TIER UP";
+            FontMetrics fm = g2d.getFontMetrics();
+            g2d.drawString(msg, (width - fm.stringWidth(msg)) / 2, (height + fm.getAscent()) / 2);
+        }
+        
+        g2d.translate(-shakeX, -shakeY);
+        
+        // Scanlines (Simplified for performance)
+        g2d.setColor(COLOR_SCANLINE);
+        for (int i = 0; i < height; i += 6) { // Increased spacing
+            g2d.drawLine(0, i, width, i);
         }
     }
 
     private void drawLogicPhase(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        
         // UI Box
-        g.setColor(new Color(25, 30, 40));
+        g.setColor(COLOR_UI_BOX);
         g.fillRoundRect(40, 40, 720, 520, 15, 15);
-        g.setColor(new Color(0, 255, 200));
-        g.setStroke(new BasicStroke(2));
+        
+        // Border
+        if (currentState == State.PLAYING && logicPhaseState.getTimeRemaining() < 5.0f) {
+            float pulse = (float) (Math.sin(System.currentTimeMillis() / 100.0) * 0.5 + 0.5);
+            g.setColor(new Color(255, 50, 50, 150 + (int)(100 * pulse)));
+        } else {
+            g.setColor(COLOR_NEON_CYAN);
+        }
+        g.setStroke(STROKE_BORDER);
         g.drawRoundRect(40, 40, 720, 520, 15, 15);
 
         // Header
-        g.setFont(new Font("Consolas", Font.BOLD, 24));
-        g.setColor(new Color(0, 255, 200));
+        g.setFont(FONT_HEADER);
+        g.setColor(COLOR_NEON_CYAN);
         g.drawString("C++ EXECUTION ENVIRONMENT", 60, 80);
         
         // Stats
-        g.setFont(new Font("Consolas", Font.BOLD, 18));
+        g.setFont(FONT_STATS);
         g.setColor(Color.YELLOW);
         g.drawString(String.format("SCORE: %05d", score), 60, 110);
         
-        g.setColor(new Color(255, 50, 100));
+        g.setColor(COLOR_NEON_RED);
         g.drawString("LIVES: " + "♥".repeat(Math.max(0, lives)), 300, 110);
         
-        g.setColor(new Color(200, 100, 255));
+        g.setColor(COLOR_PURPLE);
         g.drawString("TIER: " + currentTier, 650, 110);
 
         // Separator
-        g.setColor(new Color(0, 255, 200, 100));
+        g.setColor(COLOR_NEON_CYAN);
         g.drawLine(60, 130, 740, 130);
 
         if (currentState == State.PLAYING) {
-            // Timer Bar
             float timeLeft = logicPhaseState.getTimeRemaining();
             float timeRatio = timeLeft / logicPhaseState.getTimeLimit();
-            g.setColor(timeLeft < 5 ? new Color(255, 50, 100) : new Color(0, 255, 100));
-            g.fillRect(60, 150, (int)(680 * timeRatio), 10);
+            int barWidth = (int)(680 * timeRatio);
             
-            g.setFont(new Font("Consolas", Font.PLAIN, 16));
-            g.drawString(String.format("T-MINUS: %.1fs", timeLeft), 60, 180);
+            // Timer Bar
+            g.setColor(timeLeft < 5 ? new Color(255, 50, 100, 100) : new Color(0, 255, 100, 100));
+            g.fillRect(60, 150, barWidth, 14);
+            g.setColor(timeLeft < 5 ? COLOR_NEON_RED : COLOR_NEON_GREEN);
+            g.fillRect(60, 152, barWidth, 10);
+            
+            g.setFont(timeLeft < 5 ? FONT_TIMER_BOLD : FONT_TIMER);
+            g.drawString(String.format("T-MINUS: %.1fs", timeLeft), 60, 185);
 
-            // Question
-            g.setFont(new Font("Consolas", Font.PLAIN, 22));
-            
+            // Question rendering with typewriter
             if (!cachedQuestionLines.isEmpty()) {
-                int y = 230;
+                g.setFont(FONT_QUESTION);
+                int y = 240;
+                int currentCharsDrawn = 0;
                 FontMetrics fm = g.getFontMetrics();
+                
+                outer:
                 for (java.util.List<TextToken> lineTokens : cachedQuestionLines) {
                     int currentX = 60;
                     for (TextToken tt : lineTokens) {
-                        g.setColor(tt.color);
-                        g.drawString(tt.text, currentX, y);
-                        currentX += fm.stringWidth(tt.text);
+                        int charsInToken = tt.text.length();
+                        if (currentCharsDrawn + charsInToken <= visibleChars) {
+                            g.setColor(tt.color);
+                            g.drawString(tt.text, currentX, y);
+                            currentX += fm.stringWidth(tt.text);
+                            currentCharsDrawn += charsInToken;
+                        } else {
+                            int charsToDraw = visibleChars - currentCharsDrawn;
+                            if (charsToDraw > 0) {
+                                g.setColor(tt.color);
+                                g.drawString(tt.text.substring(0, charsToDraw), currentX, y);
+                            }
+                            break outer;
+                        }
                     }
                     y += 30;
+                    currentCharsDrawn++;
+                    if (currentCharsDrawn >= visibleChars) break;
                 }
-                // Input Field
-                g.setColor(new Color(0, 255, 200));
-                g.setFont(new Font("Consolas", Font.BOLD, 28));
-                String cursor = showCursor ? "█" : "";
-                g.drawString("> " + logicPhaseState.getPlayerInput() + cursor, 60, y + 40);
+                
+                if (visibleChars > totalChars / 2 || typewriterFinished) {
+                    g.setColor(COLOR_NEON_CYAN);
+                    g.setFont(FONT_INPUT);
+                    g.drawString("> " + logicPhaseState.getPlayerInput() + (showCursor ? "█" : ""), 60, y + 40);
+                }
             }
             
         } else if (currentState == State.FEEDBACK) {
-            g.setFont(new Font("Consolas", Font.BOLD, 54));
+            g.setFont(FONT_FEEDBACK);
             if (lastAnswerCorrect) {
-                g.setColor(new Color(0, 255, 100));
+                g.setColor(new Color(0, 100, 50)); // Shadow
+                g.drawString("ACCESS GRANTED", 182, 302);
+                g.setColor(COLOR_NEON_GREEN);
                 g.drawString("ACCESS GRANTED", 180, 300);
-                g.setFont(new Font("Consolas", Font.PLAIN, 28));
-                g.drawString("+" + (100 * currentTier) + " BYTES", 310, 360);
             } else {
-                g.setColor(new Color(255, 50, 100));
+                g.setColor(new Color(150, 0, 0)); // Shadow
+                g.drawString("ACCESS DENIED", 190 + random.nextInt(5)-2, 300 + random.nextInt(5)-2);
+                g.setColor(COLOR_NEON_RED);
                 g.drawString("ACCESS DENIED", 190, 300);
-                g.setFont(new Font("Consolas", Font.PLAIN, 28));
-                g.drawString("SYSTEM CORRUPTION DETECTED", 200, 360);
             }
         }
     }
