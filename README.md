@@ -40,6 +40,14 @@ javac -d build/classes @sources.txt
 java -cp build/classes algorythm.swing.MainSwing
 ```
 
+### ☕ Running in Apache NetBeans (IDE)
+Because this project was initialized using Apache NetBeans, it is fully compatible and ready to run out of the box.
+1. Open Apache NetBeans IDE.
+2. Go to **File > Open Project** (or press `Ctrl+Shift+O`).
+3. Select the `AlgoRythm` folder (NetBeans will recognize it automatically via the `nbproject` directory).
+4. In the Projects window, right-click the **AlgoRythm** project and select **Clean and Build**.
+5. Click the green **Run Project** button (or press `F6`). The Cyberpunk GUI will launch instantly!
+
 ## 📂 Project Architecture (MVC & Design Patterns)
 
 - **Factory Pattern (`PuzzleFactory.java`):** Dynamically generates polymophic puzzle objects (`BooleanPuzzle`, `LoopPuzzle`, `ArrayPuzzle`) based on your current score.
