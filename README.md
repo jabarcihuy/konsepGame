@@ -1,58 +1,55 @@
 # Syntax Blade : C++ Logic Terminal 💻🤖
 
-Syntax Blade is a pure logic programming quiz game built with Java Swing. It features a retro cyberpunk terminal aesthetic and tests your C++ programming knowledge in real-time under pressure!
+Syntax Blade adalah game kuis logika pemrograman murni yang dibangun menggunakan Java Swing. Game ini memiliki estetika terminal siberpunk retro dan menguji pengetahuan pemrograman C++ Anda secara *real-time* di bawah tekanan!
 
-## 🚀 Features
+## 🚀 Fitur
 
-- **Dynamic C++ Logic Puzzles:** 
-  - **Tier 1:** Basic Boolean Logic, Arithmetic, Modulus, Bitwise Operators.
-  - **Tier 2:** Pointers, References, and Loops (`for`, `while`).
-  - **Tier 3:** Dynamic Memory (`new`/`delete`), Vectors, Structs, Strings, and 2D Arrays.
-- **Cyberpunk / Hacker UI:** 
-  - Custom `Graphics2D` rendering with retro CRT scanline effects.
-  - Custom Syntax Highlighting engine built directly into Java Swing.
-  - Blinking terminal cursors and immersive neon color palettes.
-- **Multi-Frame Architecture:** 
-  - Smooth transitions between Main Menu, Execution Environment (Game), and Game Over screens using `CardLayout`.
-- **Lives & Scoring System:** 
-  - You start with **3 Lives (♥)**.
-  - Answering correctly grants points based on the difficulty tier.
-  - Answering incorrectly or letting the timer run out deducts 1 life. 
+- **Teka-teki Logika C++ Dinamis:** 
+  - **Tier 1:** Logika Boolean Dasar, Aritmatika, Modulus, dan Operator Bitwise.
+  - **Tier 2:** Pointer, Reference, dan Perulangan (`for`, `while`).
+  - **Tier 3:** Memori Dinamis (`new`/`delete`), Vector, Struct, String, dan Array 2D.
+- **Antarmuka (UI) Cyberpunk / Hacker:** 
+  - *Rendering* khusus menggunakan `Graphics2D` dengan efek *scanline* monitor CRT retro.
+  - Mesin *Syntax Highlighting* kustom yang dibangun langsung ke dalam Java Swing.
+  - Kursor terminal yang berkedip dan palet warna neon yang imersif.
+- **Arsitektur Multi-Frame:** 
+  - Transisi yang mulus antara layar Menu Utama, Lingkungan Eksekusi (Game), dan layar Game Over menggunakan `CardLayout`.
+- **Sistem Nyawa (Lives) & Skor:** 
+  - Anda memulai dengan **3 Nyawa (♥)**.
+  - Menjawab dengan benar akan memberikan poin berdasarkan tingkat kesulitan (tier).
+  - Menjawab salah atau membiarkan waktu habis akan mengurangi 1 nyawa. 
 
-## 🛠️ Requirements
-- Java Development Kit (JDK) 8 or higher.
-- Linux / Windows / macOS (Cross-platform Java Swing app).
+## 🛠️ Persyaratan
+- Java Development Kit (JDK) 8 atau lebih baru.
+- Linux / Windows / macOS (Aplikasi Java Swing lintas platform).
 
-## 🎮 How to Run
+## 🎮 Cara Menjalankan
 
-You can compile and run the project easily using the provided bash script (Linux/Mac):
+Anda dapat melakukan kompilasi dan menjalankan proyek ini dengan mudah menggunakan skrip bawaan:
 
+**Untuk Windows:**
+Klik ganda (*double-click*) pada file `run.bat`.
+
+**Untuk Linux / macOS:**
+Buka terminal dan jalankan:
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
-**Alternatively, you can compile it manually:**
-```bash
-mkdir -p build/classes
-find src -name "*.java" > sources.txt
-javac -d build/classes @sources.txt
-java -cp build/classes algorythm.swing.MainSwing
-```
+### ☕ Menjalankan di Apache NetBeans (IDE)
+Karena proyek ini diinisialisasi menggunakan Apache NetBeans, proyek ini 100% kompatibel dan siap dijalankan tanpa konfigurasi tambahan (Plug and Play).
+1. Buka IDE Apache NetBeans.
+2. Pilih **File > Open Project** (atau tekan `Ctrl+Shift+O`).
+3. Pilih folder `AlgoRythm` (NetBeans akan mengenalinya secara otomatis melalui direktori `nbproject`).
+4. Pada jendela *Projects*, klik kanan pada proyek **AlgoRythm** lalu pilih **Clean and Build**.
+5. Klik tombol hijau **Run Project** (atau tekan `F6`). GUI Cyberpunk akan langsung terbuka!
 
-### ☕ Running in Apache NetBeans (IDE)
-Because this project was initialized using Apache NetBeans, it is fully compatible and ready to run out of the box.
-1. Open Apache NetBeans IDE.
-2. Go to **File > Open Project** (or press `Ctrl+Shift+O`).
-3. Select the `AlgoRythm` folder (NetBeans will recognize it automatically via the `nbproject` directory).
-4. In the Projects window, right-click the **AlgoRythm** project and select **Clean and Build**.
-5. Click the green **Run Project** button (or press `F6`). The Cyberpunk GUI will launch instantly!
+## 📂 Arsitektur Proyek (MVC & Design Patterns)
 
-## 📂 Project Architecture (MVC & Design Patterns)
-
-- **Factory Pattern (`PuzzleFactory.java`):** Dynamically generates polymophic puzzle objects (`BooleanPuzzle`, `LoopPuzzle`, `ArrayPuzzle`) based on your current score.
-- **State Pattern (`LogicPhaseState.java`):** Encapsulates the logic phase timer, input buffering, and state validation.
-- **Model-View Separation:** The logic core (`engine.logic`) is entirely decoupled from the view and controllers (`algorythm.swing`).
+- **Factory Pattern (`PuzzleFactory.java`):** Secara dinamis menghasilkan objek teka-teki polimorfik (`BooleanPuzzle`, `LoopPuzzle`, `ArrayPuzzle`) berdasarkan skor Anda saat ini.
+- **State Pattern (`LogicPhaseState.java`):** Mengenkapsulasi *timer* fase logika, *buffer* input, dan validasi *state*.
+- **Pemisahan Model-View:** Inti logika (`engine.logic`) sepenuhnya dipisahkan dari tampilan dan kontroler (`algorythm.swing`).
 
 ---
-*Created for High-Level OOP Coursework.*
+*Dibuat untuk Tugas Mata Kuliah High-Level OOP.*
